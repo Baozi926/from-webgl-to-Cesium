@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Three.js Cube Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <script src="./assets/js/three.min.js"></script>
+    <script src="./assets/js/dat.gui.min.js"></script>
+
+    <script>
+      // Setup renderer and camera
+      var renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.z = 5;
+
+      // Setup scene
+      var scene = new THREE.Scene();
+
+      // Setup cube and add it to scene
+      var geometry = new THREE.BoxGeometry(1, 1, 1);
+      var material = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        wireframe: true,
+      });
+      var cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      // Setup dat.GUI
+      var gui = new dat.GUI();
+      gui.add(cube.rotation, "x", 0, Math.PI * 2).name("Rotation X");
+      gui.add(cube.rotation, "y", 0, Math.PI * 2).name("Rotation Y");
+      gui.add(cube.rotation, "z", 0, Math.PI * 2).name("Rotation Z");
+
+      // Render loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // cube.rotation.x += 0.01;
+        // cube.rotation.y += 0.01;
+
+        renderer.render(scene, camera);
+      }
+      animate();
+    </script>
+  </body>
+</html>

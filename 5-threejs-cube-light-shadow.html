@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>THREE.js Cube Demo</title>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+
+      #container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+      }
+
+      #gui {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+    <div id="gui"></div>
+
+    <script src="./assets/js/three.min.js"></script>
+    <script src="./assets/js/dat.gui.min.js"></script>
+    <script>
+      // Create a renderer
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Add the renderer to the page
+      const container = document.querySelector("#container");
+      container.appendChild(renderer.domElement);
+
+      // Create a scene
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color("#fff");
+      // Add a camera
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      );
+      camera.position.z = 5;
+
+      camera.position.set(1, 1, 5);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+      // camera.position.x = 1;
+      // camera.position.y = 1;
+      scene.add(camera);
+
+      // Create a light
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(-10, 10, 10);
+      light.castShadow = true;
+      const shadowSize = 20;
+      light.shadow.camera.left = -shadowSize;
+      light.shadow.camera.right = shadowSize;
+      light.shadow.camera.top = shadowSize;
+      light.shadow.camera.bottom = -shadowSize;
+      light.shadow.mapSize.width = 1024;
+      light.shadow.mapSize.height = 1024;
+      scene.add(light);
+
+      // Create a plane
+      const planeGeometry = new THREE.PlaneGeometry(10, 10, 0);
+      const planeMaterial = new THREE.MeshPhongMaterial({
+        color: new THREE.Color("red"),
+      });
+      const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+      plane.receiveShadow = true;
+      plane.rotation.x = -Math.PI / 2;
+      scene.add(plane);
+
+      // Create a cube
+      const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+      const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+      const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+      cube.castShadow = true;
+      cube.position.y = 1;
+      cube.position.z = 0.5;
+      
+      scene.add(cube);
+
+      // Add controls to GUI
+      const controls = {
+        rotationX: 0,
+        rotationY: 0,
+        rotationZ: 0,
+      };
+      const gui = new dat.GUI();
+      gui
+        .add(controls, "rotationX", -Math.PI / 2, Math.PI / 2, 0.01)
+        .name("Rotation X");
+      gui
+        .add(controls, "rotationY", -Math.PI / 2, Math.PI / 2, 0.01)
+        .name("Rotation Y");
+      gui
+        .add(controls, "rotationZ", -Math.PI / 2, Math.PI / 2, 0.01)
+        .name("Rotation Z");
+    
+
+      // Render the scene
+      function render() {
+        cube.rotation.x = controls.rotationX;
+        cube.rotation.y = controls.rotationY;
+        cube.rotation.z = controls.rotationZ;
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+      }
+
+      requestAnimationFrame(render);
+    </script>
+  </body>
+</html>

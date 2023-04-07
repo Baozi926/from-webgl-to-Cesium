@@ -1,0 +1,144 @@
+<html>
+  <head>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cesiumContainer" style="width: 100%; height: 100%"></div>
+    <script type="text/javascript" src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+
+    <script>
+      Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzRmYThjMS1hMjE4LTQwMGYtYmYwOC1lZGQ5NWY4ZjU0MjkiLCJpZCI6MTYwNDksInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1Njk0NjQ0MjB9.ARU_MGaOknVNlMxTC8yTQK4lik_DXm42LKaAXA19BFI";
+
+      class MyPrimitive {
+        constructor(modelMatrix) {
+          this.modelMatrix = modelMatrix || Cesium.Matrix4.IDENTITY.clone();
+          this.drawCommand = null;
+        }
+
+        /**
+         * 创建 DrawCommand
+         * @param {Cesium.Context} context
+         */
+        createCommand(context) {
+          var modelMatrix = this.modelMatrix;
+
+          var box = new Cesium.BoxGeometry({
+            vertexFormat: Cesium.VertexFormat.POSITION_NORMAL_AND_ST,
+            maximum: new Cesium.Cartesian3(250000.0, 250000.0, 250000.0),
+            minimum: new Cesium.Cartesian3(-250000.0, -250000.0, -250000.0),
+          });
+          var geometry = Cesium.BoxGeometry.createGeometry(box);
+
+          var attributeLocations =
+            Cesium.GeometryPipeline.createAttributeLocations(geometry);
+
+          var va = Cesium.VertexArray.fromGeometry({
+            context: context,
+            geometry: geometry,
+            attributeLocations: attributeLocations,
+          });
+
+          var vs = `
+    attribute vec3 position;
+    attribute vec3 normal;
+    varying vec3 v_normalEC;
+    varying vec3 v_positionEC;
+    void main(){
+        gl_Position = czm_projection  * czm_modelView * vec4( position , 1. );
+        v_normalEC = czm_normal * normal; 
+        v_positionEC = (czm_modelViewRelativeToEye * gl_Position).xyz;    // position in eye coordinates 
+    }
+    `;
+          var fs = `
+    uniform vec3 color;
+    varying vec3 v_normalEC;
+    varying vec3 v_positionEC;
+    void main(){
+
+        vec3 positionToEyeEC = -v_positionEC;
+
+        vec3 normalEC = normalize(v_normalEC);
+        #ifdef FACE_FORWARD
+            normalEC = faceforward(normalEC, vec3(0.0, 0.0, 1.0), -normalEC);
+        #endif
+
+        czm_materialInput materialInput;
+        materialInput.normalEC = normalEC;
+        materialInput.positionToEyeEC = positionToEyeEC;
+        czm_material material = czm_getDefaultMaterial(materialInput);
+        material.diffuse = color.rgb;
+        material.alpha = 1.0;
+
+        // gl_FragColor=vec4( color , 1. );
+
+        
+        gl_FragColor = czm_phong(normalize(positionToEyeEC), material, czm_lightDirectionEC);
+    }
+    `;
+
+          var shaderProgram = Cesium.ShaderProgram.fromCache({
+            context: context,
+            vertexShaderSource: vs,
+            fragmentShaderSource: fs,
+            attributeLocations: attributeLocations,
+          });
+
+          var uniformMap = {
+            color() {
+              return Cesium.Color.GRAY;
+            },
+          };
+
+          var renderState = Cesium.RenderState.fromCache({
+            cull: {
+              enabled: true,
+              face: Cesium.CullFace.BACK,
+            },
+            depthTest: {
+              enabled: true,
+            },
+          });
+
+          this.drawCommand = new Cesium.DrawCommand({
+            modelMatrix: modelMatrix,
+            vertexArray: va,
+            shaderProgram: shaderProgram,
+            uniformMap: uniformMap,
+            renderState: renderState,
+            pass: Cesium.Pass.OPAQUE,
+          });
+        }
+
+        /**
+         * 实现Primitive接口，供Cesium内部在每一帧中调用
+         * @param {Cesium.FrameState} frameState
+         */
+        update(frameState) {
+          if (!this.drawCommand) {
+            this.createCommand(frameState.context);
+          }
+          frameState.commandList.push(this.drawCommand);
+        }
+      }
+
+      var viewer = new Cesium.Viewer("cesiumContainer");
+      viewer.scene.globe.depthTestAgainstTerrain = true;
+
+      var origin = Cesium.Cartesian3.fromDegrees(-120, 26, 250000 / 2);
+      var modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(origin);
+
+      var primitive = new MyPrimitive(modelMatrix);
+      viewer.scene.primitives.add(primitive);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>水面倒影</title>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
+
+    <!-- <script src="water.js"></script> -->
+    <script src="./CesiumUnminified/Cesium.js"></script>
+    <link href="./CesiumUnminified/Widgets/widgets.css" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map" style="width: 100%; height: 100%"></div>
+  </body>
+</html>
+<script type="module">
+  import WaterPrimitive from "./assets/js/WaterPrimitive.js";
+  import { GUI } from "./assets/js/lil-gui.module.min.js";
+
+  Cesium.Ion.defaultAccessToken =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwNzRmYThjMS1hMjE4LTQwMGYtYmYwOC1lZGQ5NWY4ZjU0MjkiLCJpZCI6MTYwNDksInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1Njk0NjQ0MjB9.ARU_MGaOknVNlMxTC8yTQK4lik_DXm42LKaAXA19BFI";
+
+  //设置全局对象
+  var viewer = new Cesium.Viewer("map");
+
+
+
+  const positions = [
+    Cesium.Cartographic.fromDegrees(
+      -75.59967741159785,
+      40.04091766662355,
+      76.37856662343563
+    ),
+    Cesium.Cartographic.fromDegrees(
+      -75.59955207631664,
+      40.036827420667116,
+      71.6963743893841
+    ),
+    Cesium.Cartographic.fromDegrees(
+      -75.59376378325359,
+      40.0367060679407,
+      83.98039248519758
+    ),
+    Cesium.Cartographic.fromDegrees(
+      -75.5936186712503,
+      40.03959922674249,
+      82.13316846253008
+    ),
+    Cesium.Cartographic.fromDegrees(
+      -75.59550520685805,
+      40.04082628776817,
+      84.00794582002823
+    ),
+  ];
+  const bbb = viewer.scene.primitives.add(
+    new Cesium.Cesium3DTileset({
+      url: Cesium.IonResource.fromAssetId(40866),
+    })
+  );
+
+  viewer.flyTo(bbb);
+
+  const aaa = new WaterPrimitive({
+    scene: viewer.scene,
+    positions: positions,
+    height: 81,
+    rippleSize: 100,
+  });
+
+  const gui2 = new GUI();
+  const waterParams = {
+    波纹大小: 50.0,
+    透明度: 0.9,
+    反射率: 0.3,
+    扭曲: 3.7,
+    高度: 81,
+  };
+  function waterParamsUpdate() {
+    aaa.rippleSize = waterParams["波纹大小"];
+    aaa.waterAlpha = waterParams["透明度"];
+    aaa.reflectivity = waterParams["反射率"];
+    aaa.distortionScale = waterParams["扭曲"];
+    aaa.height = waterParams["高度"];
+  }
+  gui2.add(waterParams, "波纹大小").min(0).max(300).onChange(waterParamsUpdate);
+  gui2.add(waterParams, "透明度").min(0).max(1).onChange(waterParamsUpdate);
+  gui2.add(waterParams, "反射率").min(0).max(1).onChange(waterParamsUpdate);
+  gui2.add(waterParams, "扭曲").min(0).max(8).onChange(waterParamsUpdate);
+  gui2.add(waterParams, "高度").min(70).max(100).onChange(waterParamsUpdate);
+</script>
